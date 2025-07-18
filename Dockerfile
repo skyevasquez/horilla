@@ -20,4 +20,6 @@ RUN python manage.py collectstatic --noinput || true
 RUN python manage.py compilemessages || true
 
 # default start command
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "horilla.wsgi:application"]
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+CMD ["/start.sh", "gunicorn", "--bind", "0.0.0.0:8000", "horilla.wsgi:application"]
