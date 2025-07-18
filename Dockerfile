@@ -1,17 +1,23 @@
-FROM python:3.10-slim-bullseye
+# Dockerfile
+FROM python:3.11-slim
 
-ENV PYTHONUNBUFFERED=1
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y libcairo2-dev gcc
+# system packages
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential libpq-dev gettext git \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app/
-
+# copy source (Coolify clones the repo for us)
 COPY . .
 
-RUN chmod +x /app/entrypoint.sh
+# python deps
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install -r requirements.txt
+# collect static files & translations
+RUN python manage.py collectstatic --noinput || true
+RUN python manage.py compilemessages || true
 
-EXPOSE 8000
-
-CMD ["python3", "manage.py", "runserver"]
+# default start command
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "horilla.wsgi:application"]
